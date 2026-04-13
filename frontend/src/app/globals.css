@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0b0d;
+  --foreground: #e4e4e7;
+  --card: #111318;
+  --card-border: #1e2028;
+  --accent: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-red: #ef4444;
+  --muted: #71717a;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.card {
+  @apply rounded-xl border border-[#1e2028] bg-[#111318] p-6;
+}
+
+.btn-primary {
+  @apply rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-danger {
+  @apply rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.input {
+  @apply rounded-lg border border-[#1e2028] bg-[#0a0b0d] px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500;
+}
+
+.label {
+  @apply mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-500;
+}
+
+.status-badge {
+  @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.status-compliant {
+  @apply status-badge bg-green-500/10 text-green-400;
+}
+
+.status-noncompliant {
+  @apply status-badge bg-red-500/10 text-red-400;
+}
+
+.status-pending {
+  @apply status-badge bg-yellow-500/10 text-yellow-400;
+}
+
+/* Proof generation animation */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 20px 4px rgba(59, 130, 246, 0.2); }
+}
+
+.proving-animation {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}

@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+contracts/out/
+contracts/cache/
+frontend/.next/
+frontend/out/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Circuit artifacts (large files - regenerate with scripts/setup-circuit.sh)
+*.ptau
+*.zkey
+*.wtns
+*.sym
+circuits/build/
+
+# Frontend circuit copies (copy from circuits/build after compilation)
+frontend/public/*.wasm
+frontend/public/*.zkey
+
+# Foundry
+contracts/lib/

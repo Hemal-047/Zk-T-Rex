@@ -1,0 +1,15 @@
+{
+  "name": "zktrex",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zero-knowledge privacy layer for ERC-3643 compliant tokenized securities on HashKey Chain",
+  "scripts": {
+    "setup:circuits": "bash scripts/setup-circuit.sh",
+    "setup:contracts": "cd contracts && forge install --no-commit",
+    "test:circuits": "cd circuits && npm test",
+    "test:contracts": "cd contracts && forge test -vvv",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "deploy": "bash scripts/deploy.sh"
+  }
+}
