@@ -1,9 +1,104 @@
 "use client";
 
 import { useState } from "react";
+import { useAccount, useReadContract } from "wagmi";
+import {
+  CONTRACTS,
+  SIMPLE_IDENTITY_REGISTRY_ABI,
+  DEMO_MODE,
+} from "../lib/contracts";
+
+const JURISDICTION_NAMES: Record<number, string> = {
+  852: "HK (Hong Kong)",
+  65: "SG (Singapore)",
+  1: "US (United States)",
+  44: "UK (United Kingdom)",
+};
+
+const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
 export default function ComparisonDemo() {
   const [isAnimating, setIsAnimating] = useState(false);
+  const { address, isConnected } = useAccount();
+
+  const isLive =
+    isConnected &&
+    !DEMO_MODE &&
+    CONTRACTS.simpleIdentityRegistry !== ZERO_ADDR;
+
+  const registryAddr = CONTRACTS.simpleIdentityRegistry as `0x${string}`;
+  const queryEnabled = isLive && !!address;
+
+  const { data: liveKycLevel } = useReadContract({
+    address: registryAddr,
+    abi: SIMPLE_IDENTITY_REGISTRY_ABI,
+    functionName: "kycLevel",
+    args: [address!],
+    query: { enabled: queryEnabled },
+  });
+
+  const { data: liveJurisdiction } = useReadContract({
+    address: registryAddr,
+    abi: SIMPLE_IDENTITY_REGISTRY_ABI,
+    functionName: "jurisdiction",
+    args: [address!],
+    query: { enabled: queryEnabled },
+  });
+
+  const { data: liveIsAccredited } = useReadContract({
+    address: registryAddr,
+    abi: SIMPLE_IDENTITY_REGISTRY_ABI,
+    functionName: "isAccredited",
+    args: [address!],
+    query: { enabled: queryEnabled },
+  });
+
+  const { data: liveKycExpiry } = useReadContract({
+    address: registryAddr,
+    abi: SIMPLE_IDENTITY_REGISTRY_ABI,
+    functionName: "kycExpiry",
+    args: [address!],
+    query: { enabled: queryEnabled },
+  });
+
+  const { data: liveIsVerified } = useReadContract({
+    address: registryAddr,
+    abi: SIMPLE_IDENTITY_REGISTRY_ABI,
+    functionName: "isVerified",
+    args: [address!],
+    query: { enabled: queryEnabled },
+  });
+
+  // Compute display values — live reads or static fallback
+  const displayAddress =
+    isLive && address
+      ? `${address.slice(0, 6)}...${address.slice(-4)}`
+      : "0x7a23...8f4d";
+  const displayKycLevel =
+    isLive && liveKycLevel !== undefined
+      ? `Level ${liveKycLevel}`
+      : "Level 2";
+  const displayJurisdiction =
+    isLive && liveJurisdiction !== undefined
+      ? JURISDICTION_NAMES[Number(liveJurisdiction)] ??
+        `Code ${liveJurisdiction}`
+      : "HK (Hong Kong)";
+  const displayAccredited =
+    isLive && liveIsAccredited !== undefined
+      ? liveIsAccredited
+        ? "TRUE"
+        : "FALSE"
+      : "TRUE";
+  const displayExpiry =
+    isLive && liveKycExpiry !== undefined
+      ? new Date(Number(liveKycExpiry) * 1000).toLocaleDateString()
+      : "2026-04-14";
+  const displayVerified =
+    isLive && liveIsVerified !== undefined
+      ? liveIsVerified
+        ? "VERIFIED"
+        : "NOT VERIFIED"
+      : "VERIFIED";
 
   const triggerDemo = () => {
     setIsAnimating(true);
@@ -24,6 +119,22 @@ export default function ComparisonDemo() {
         </button>
       </div>
 
+      {isLive ? (
+        <div className="mb-4 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-center">
+          <p className="text-sm text-blue-400">
+            <span className="mr-2 inline-block h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+            Live Mode — Reading on-chain data for {address?.slice(0, 6)}...
+            {address?.slice(-4)}
+          </p>
+        </div>
+      ) : (
+        <div className="mb-4 rounded-lg border border-zinc-700/50 bg-zinc-800/30 p-3 text-center">
+          <p className="text-xs text-zinc-500">
+            Demo Mode — Connect wallet with deployed contracts for live on-chain reads
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Standard ERC-3643 */}
         <div className="rounded-xl border-2 border-red-500/30 bg-[#111318] p-6">
@@ -40,57 +151,66 @@ export default function ComparisonDemo() {
             </div>
           </div>
 
+          {isLive && (
+            <div className="mb-3 rounded-md border border-red-500/20 bg-red-500/5 px-3 py-2">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-red-400/80">
+                ON-CHAIN: PUBLIC — SimpleIdentityRegistry
+              </p>
+            </div>
+          )}
+
           <div className="space-y-3">
             <DataRow
-              label="Sender ONCHAINID"
-              value="0x7a23...8f4d"
+              label="Identity Address"
+              value={displayAddress}
               isVisible
               isAnimating={isAnimating}
             />
             <DataRow
-              label="Claim: KYC_VERIFIED"
-              value="TRUE"
+              label="Claim: KYC_LEVEL"
+              value={displayKycLevel}
+              isVisible
+              isAnimating={isAnimating}
+              highlight="red"
+            />
+            <DataRow
+              label="Claim: IS_VERIFIED"
+              value={displayVerified}
               isVisible
               isAnimating={isAnimating}
               highlight="red"
             />
             <DataRow
               label="Claim: JURISDICTION"
-              value="HK (Hong Kong)"
+              value={displayJurisdiction}
               isVisible
               isAnimating={isAnimating}
               highlight="red"
             />
             <DataRow
-              label="Claim: ACCREDITED_INVESTOR"
-              value="TIER_2"
+              label="Claim: IS_ACCREDITED"
+              value={displayAccredited}
               isVisible
               isAnimating={isAnimating}
               highlight="red"
             />
             <DataRow
-              label="Trusted Issuer"
-              value="0x3f91...2a7c (HashKey KYC)"
+              label="Claim: KYC_EXPIRY"
+              value={displayExpiry}
               isVisible
               isAnimating={isAnimating}
               highlight="red"
             />
             <DataRow
-              label="Identity Registry"
-              value="LOOKUP: 0x7a23 -> Claims[1,2,3]"
+              label="Data Source"
+              value={isLive ? "LIVE ON-CHAIN READ" : "mapping(address => data)"}
               isVisible
               isAnimating={isAnimating}
               highlight="red"
             />
             <DataRow
               label="Transfer Amount"
-              value="1,000 hkBOND"
-              isVisible
-              isAnimating={isAnimating}
-            />
-            <DataRow
-              label="Recipient ONCHAINID"
-              value="0x9b12...6e3a"
+              value="1,000 sBOND"
               isVisible
               isAnimating={isAnimating}
             />
@@ -98,10 +218,12 @@ export default function ComparisonDemo() {
 
           <div className="mt-4 rounded-lg bg-red-500/10 p-3 text-center">
             <p className="text-sm font-medium text-red-400">
-              6 identity attributes exposed
+              5 identity attributes exposed
             </p>
             <p className="text-xs text-red-400/70">
-              Anyone can see investor jurisdiction, KYC tier, and accreditation status
+              {isLive
+                ? "Read directly from SimpleIdentityRegistry — anyone can query this"
+                : "Anyone can read investor jurisdiction, KYC level, and accreditation"}
             </p>
           </div>
         </div>

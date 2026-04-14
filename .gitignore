@@ -33,6 +33,7 @@ frontend/public/*.wasm
 frontend/public/*.zkey
 
 # Foundry (cache/out already excluded above)
+contracts/broadcast/
 
 # Secrets
 scripts/issuer-key.json
