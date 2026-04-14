@@ -1,14 +1,16 @@
-// IMPORTANT: Replace these with actual deployed addresses after running Deploy.s.sol
+// When true, the frontend uses bundled demo data for proof generation
+// instead of reading from on-chain contracts. Set to false after deployment.
+export const DEMO_MODE = true;
+
+// UPDATE AFTER DEPLOYMENT — replace with actual deployed addresses
 export const CONTRACTS = {
-  groth16Verifier: "0x...",
-  revocationRegistry: "0x...",
-  identityTreeManager: "0x...",
-  zkComplianceModule: "0x...",
-  rwaToken: "0x...",
+  groth16Verifier: "0x0000000000000000000000000000000000000000",
+  revocationRegistry: "0x0000000000000000000000000000000000000000",
+  identityTreeManager: "0x0000000000000000000000000000000000000000",
+  zkComplianceModule: "0x0000000000000000000000000000000000000000",
+  rwaToken: "0x0000000000000000000000000000000000000000",
 } as const;
 
-// ABIs - import from contract artifacts after compilation
-// For hackathon speed: paste the relevant function ABIs inline
 export const ZK_COMPLIANCE_ABI = [
   {
     inputs: [

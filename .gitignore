@@ -32,5 +32,7 @@ circuits/build/
 frontend/public/*.wasm
 frontend/public/*.zkey
 
-# Foundry
-contracts/lib/
+# Foundry (cache/out already excluded above)
+
+# Secrets
+scripts/issuer-key.json

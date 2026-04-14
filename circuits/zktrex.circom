@@ -4,6 +4,7 @@ include "node_modules/circomlib/circuits/poseidon.circom";
 include "node_modules/circomlib/circuits/eddsaposeidon.circom";
 include "node_modules/circomlib/circuits/comparators.circom";
 include "node_modules/circomlib/circuits/mux1.circom";
+include "node_modules/circomlib/circuits/bitify.circom";
 
 // Merkle Inclusion Proof (Identity Tree)
 template MerkleInclusion(levels) {
@@ -55,7 +56,9 @@ template SMTNonInclusion(levels) {
     signal levelHashes[levels + 1];
 
     // Decompose claimNullifier into bits for path direction
-    component n2b = Num2Bits(levels);
+    // Nullifier is a Poseidon hash (~254 bits), so decompose fully
+    // then use only the first `levels` bits for tree navigation
+    component n2b = Num2Bits(254);
     n2b.in <== claimNullifier;
     for (var i = 0; i < levels; i++) {
         bits[i] <== n2b.out[i];

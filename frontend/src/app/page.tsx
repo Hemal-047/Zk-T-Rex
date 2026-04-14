@@ -6,13 +6,15 @@ import ComplianceStatus from "../components/ComplianceStatus";
 import TransferPanel from "../components/TransferPanel";
 import RevocationAdmin from "../components/RevocationAdmin";
 import ComparisonDemo from "../components/ComparisonDemo";
+import ProofGenerator from "../components/ProofGenerator";
+import { DEMO_MODE } from "../lib/contracts";
 import { useState } from "react";
+
+type Tab = "demo" | "dashboard" | "comparison";
 
 export default function Home() {
   const { isConnected } = useAccount();
-  const [activeTab, setActiveTab] = useState<"dashboard" | "comparison">(
-    "dashboard"
-  );
+  const [activeTab, setActiveTab] = useState<Tab>(DEMO_MODE ? "demo" : "dashboard");
 
   return (
     <main className="min-h-screen bg-[#0a0b0d]">
@@ -33,16 +35,18 @@ export default function Home() {
 
           <div className="flex items-center gap-4">
             <div className="flex rounded-lg border border-[#1e2028] bg-[#111318] p-0.5">
-              <button
-                onClick={() => setActiveTab("dashboard")}
-                className={`rounded-md px-3 py-1.5 text-sm transition ${
-                  activeTab === "dashboard"
-                    ? "bg-blue-600 text-white"
-                    : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                Dashboard
-              </button>
+              {DEMO_MODE && (
+                <button
+                  onClick={() => setActiveTab("demo")}
+                  className={`rounded-md px-3 py-1.5 text-sm transition ${
+                    activeTab === "demo"
+                      ? "bg-blue-600 text-white"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  Live Proof
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab("comparison")}
                 className={`rounded-md px-3 py-1.5 text-sm transition ${
@@ -52,6 +56,16 @@ export default function Home() {
                 }`}
               >
                 ERC-3643 vs zkT-REX
+              </button>
+              <button
+                onClick={() => setActiveTab("dashboard")}
+                className={`rounded-md px-3 py-1.5 text-sm transition ${
+                  activeTab === "dashboard"
+                    ? "bg-blue-600 text-white"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Dashboard
               </button>
             </div>
             <div className="flex items-center gap-2 rounded-full border border-[#1e2028] bg-[#111318] px-3 py-1">
@@ -67,6 +81,19 @@ export default function Home() {
       <div className="mx-auto max-w-7xl px-6 py-8">
         {activeTab === "comparison" ? (
           <ComparisonDemo />
+        ) : activeTab === "demo" ? (
+          <div className="mx-auto max-w-2xl">
+            <div className="mb-6 text-center">
+              <h2 className="mb-2 text-2xl font-bold text-white">
+                In-Browser ZK Proof Generation
+              </h2>
+              <p className="text-sm text-zinc-500">
+                Generate a real Groth16 proof using snarkjs. The proof verifies
+                KYC compliance without revealing any identity data.
+              </p>
+            </div>
+            <ProofGenerator />
+          </div>
         ) : !isConnected ? (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600/10">
