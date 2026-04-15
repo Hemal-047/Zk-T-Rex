@@ -28,9 +28,10 @@ Thumbs.db
 *.sym
 circuits/build/
 
-# Frontend circuit copies (copy from circuits/build after compilation)
-frontend/public/*.wasm
-frontend/public/*.zkey
+# Frontend circuit copies — committed for Vercel deploy (8.9 MB zkey, 3.5 MB wasm)
+# (artifacts under circuits/build/ are still ignored by the *.zkey/*.wasm rules above)
+!frontend/public/zktrex.wasm
+!frontend/public/zktrex_final.zkey
 
 # Foundry (cache/out already excluded above)
 contracts/broadcast/

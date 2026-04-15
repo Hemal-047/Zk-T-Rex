@@ -1,6 +1,14 @@
-// When true, the frontend uses bundled demo data for proof generation
-// instead of reading from on-chain contracts. Set to false after deployment.
-export const DEMO_MODE = false;
+// DEMO_MODE controls whether the frontend uses bundled static data or
+// reads/writes against the live HashKey Testnet contracts.
+//
+//  true  -> static comparison data, no wallet required. Safe public-facing default
+//           for the Vercel deployment so visitors can browse the project end-to-end.
+//  false -> live on-chain reads + writes. Requires a connected wallet on HashKey
+//           Testnet (chain 133) and the deployer-funded compliance state below.
+//
+// Flip to false locally if you have a funded wallet and want to exercise the full
+// submitProof / canTransfer / revoke pipeline against the deployed contracts.
+export const DEMO_MODE = true;
 
 // Deployed to HashKey Testnet (Chain ID 133)
 // Explorer: https://testnet-explorer.hsk.xyz

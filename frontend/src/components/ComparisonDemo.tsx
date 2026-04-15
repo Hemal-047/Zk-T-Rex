@@ -24,7 +24,7 @@ export default function ComparisonDemo() {
   const isLive =
     isConnected &&
     !DEMO_MODE &&
-    CONTRACTS.simpleIdentityRegistry !== ZERO_ADDR;
+    (CONTRACTS.simpleIdentityRegistry as string) !== ZERO_ADDR;
 
   const registryAddr = CONTRACTS.simpleIdentityRegistry as `0x${string}`;
   const queryEnabled = isLive && !!address;
