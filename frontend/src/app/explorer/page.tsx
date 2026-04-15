@@ -170,11 +170,9 @@ export default function ExplorerPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <a href="/" className="flex items-center gap-3">
             <img
-              src="/logo.svg"
+              src="/Logo.png"
               alt="zkT-REX"
-              width={36}
-              height={36}
-              className="h-9 w-9"
+              className="h-10 w-auto"
             />
             <div>
               <h1 className="text-lg font-semibold text-white">

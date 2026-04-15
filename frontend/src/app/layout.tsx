@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "zkT-REX | Private Compliance for Tokenized Securities",
   description:
     "Zero-knowledge privacy layer for ERC-3643 compliant tokenized securities",
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({

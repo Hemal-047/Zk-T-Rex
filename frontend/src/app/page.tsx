@@ -47,11 +47,9 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="/logo.svg"
+              src="/Logo.png"
               alt="zkT-REX"
-              width={36}
-              height={36}
-              className="h-9 w-9"
+              className="h-10 w-auto"
             />
             <div>
               <h1 className="text-lg font-semibold text-white">zkT-REX</h1>
