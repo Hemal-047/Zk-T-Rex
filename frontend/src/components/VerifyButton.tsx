@@ -193,6 +193,10 @@ export default function VerifyButton({ onVerified }: Props) {
           ? "Re-issue Credential"
           : "Get Verified"}
       </button>
+
+      <p className="mt-2 text-center text-[11px] text-zinc-500">
+        Compatible with HashKey KYC SBT (0x6447...Bd43)
+      </p>
     </div>
   );
 }

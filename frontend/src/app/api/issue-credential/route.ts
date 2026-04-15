@@ -26,6 +26,27 @@ import {
   toBytes32Hex,
 } from "../../../lib/server/issuer";
 import { getServerWallet } from "../../../lib/server/chain";
+
+// HashKey's official KYC SBT contract on HashKey Chain Testnet (chain ID 133).
+// When USE_HASHKEY_KYC=true, only wallets that pass isHuman() can get a credential.
+const HASHKEY_KYC_SBT_ADDRESS =
+  "0x6447ae565a90Daa0BD0B36C03EEB7717Cd2BFd43" as const;
+const KYC_SBT_ABI = [
+  {
+    type: "function",
+    name: "isHuman",
+    stateMutability: "view",
+    inputs: [{ name: "addr", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "getKycLevel",
+    stateMutability: "view",
+    inputs: [{ name: "addr", type: "address" }],
+    outputs: [{ name: "", type: "uint8" }],
+  },
+] as const;
 import {
   getIdentityTree,
   getRevocationTree,
@@ -57,6 +78,52 @@ export async function POST(req: NextRequest) {
       );
     }
     const wallet = getAddress(rawWallet) as `0x${string}`;
+
+    // === HashKey KYC SBT gate ===
+    // When USE_HASHKEY_KYC=true we only issue zkT-REX credentials to wallets
+    // that HashKey's official KYC SBT has already verified as human. The ZK
+    // layer then proves compliance attributes from that verified KYC without
+    // exposing them on-chain. When false, we're in demo mode — skip the check
+    // but log it so it's obvious what's happening.
+    const useHashKeyKyc =
+      (process.env.USE_HASHKEY_KYC || "false").toLowerCase() === "true";
+    if (useHashKeyKyc) {
+      try {
+        const { publicClient } = getServerWallet();
+        const isHuman = (await publicClient.readContract({
+          address: HASHKEY_KYC_SBT_ADDRESS,
+          abi: KYC_SBT_ABI,
+          functionName: "isHuman",
+          args: [wallet],
+        })) as boolean;
+
+        if (!isHuman) {
+          return NextResponse.json(
+            {
+              error:
+                "HashKey KYC verification required. Please complete KYC at https://kyc-testnet.hunyuankyc.com/",
+            },
+            { status: 403 }
+          );
+        }
+      } catch (err: any) {
+        console.error(
+          "[issue-credential] HashKey KYC SBT check failed:",
+          err?.shortMessage || err?.message
+        );
+        return NextResponse.json(
+          {
+            error:
+              "HashKey KYC verification required. Please complete KYC at https://kyc-testnet.hunyuankyc.com/",
+          },
+          { status: 403 }
+        );
+      }
+    } else {
+      console.log(
+        "[issue-credential] Demo mode — HashKey KYC SBT check skipped"
+      );
+    }
 
     // If this wallet already has a live record, return the existing
     // credential handle so re-verification is idempotent. We still mint

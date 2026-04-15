@@ -53,6 +53,8 @@ ERC-3643 is the dominant token standard for regulated RWA tokenization ($32B+ in
 +-----------------------------------------------------------+
 ```
 
+zkT-REX integrates with HashKey Chain's official KYC SBT. When `USE_HASHKEY_KYC=true`, credentials are only issued to wallets verified through HashKey's KYC infrastructure. The ZK layer proves compliance attributes from that verified KYC without exposing them on-chain.
+
 ## Deployed Contracts (HashKey Chain Testnet)
 
 ### ZK Stack (the privacy layer)
