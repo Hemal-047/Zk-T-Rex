@@ -75,17 +75,70 @@ zkT-REX integrates with HashKey Chain's official KYC SBT. When `USE_HASHKEY_KYC=
 | StandardComplianceModule | `0x7FB37f8216bACD5B3b4609507C79fE51f2b561b6` | [View](https://testnet-explorer.hsk.xyz/address/0x7FB37f8216bACD5B3b4609507C79fE51f2b561b6) |
 | StandardRWAToken (sBOND) | `0xE2071b1B1894DE4605b50c279491A98862F37d4b` | [View](https://testnet-explorer.hsk.xyz/address/0xE2071b1B1894DE4605b50c279491A98862F37d4b) |
 
+## Integrate zkT-REX in Your Protocol
+
+zkT-REX implements the standard ERC-3643 `ICompliance` interface — so integrating it is a one-line change in the token constructor:
+
+```solidity
+// Standard ERC-3643: transparent compliance (exposes investor data)
+ICompliance compliance = new StandardComplianceModule(identityRegistry);
+
+// zkT-REX: private compliance (same interface, zero data exposure)
+ICompliance compliance = new ZKComplianceModule(
+    groth16Verifier,
+    revocationRegistry,
+    identityTreeManager
+);
+
+// Your token works exactly the same — just swap the compliance module
+RWAToken token = new RWAToken("Bond", "BOND", address(compliance));
+```
+
+## How zkT-REX Compares
+
+| Feature | Standard ERC-3643 | NullGate | zkT-REX |
+|---|---|---|---|
+| Investor country on-chain | Yes (`investorCountry` mapping) | Hidden at entry, address permanently flagged | Never on-chain |
+| Transfer linkability | All linked via ONCHAINID | All linked via admitted address | Proofs expire, no permanent flag |
+| Revocation method | Remove from registry (public) | No ZK revocation | SMT non-inclusion (cryptographic, private) |
+| Compliance model | Static whitelist | One-time admission | Continuous (freshness window) |
+| ZK circuit | N/A | Semaphore (off-the-shelf) | Custom: EdDSA + dual Merkle + expiry (14,992 constraints) |
+| ERC-3643 compatible | Native | Separate system | Drop-in `ICompliance` replacement |
+| HashKey KYC SBT | Via ONCHAINID | Semaphore gate | `IKycSBT` integrated |
+
+## Verified On-Chain Transactions
+
+Every step of the zkT-REX flow has been exercised on HashKey Chain Testnet (chain ID 133). These hashes are live — click through to the explorer to inspect calldata, events, and gas.
+
+| Step | Description | Tx Hash | Gas | Explorer |
+|---|---|---|---|---|
+| 1 | Identity commitment registered (`IdentityTreeManager.addIdentity`) | `0x512bdada25ec252e54b4774ac68e92ce5bc523c975c655292e9e7d475ccb1002` | 54,679 | [View](https://testnet-explorer.hsk.xyz/tx/0x512bdada25ec252e54b4774ac68e92ce5bc523c975c655292e9e7d475ccb1002) |
+| 2 | ZK proof verified on-chain (`ZKComplianceModule.submitProof`) | `0xc72e7bd373bebb42a98246b804a0f80f01ecec9d69eea70154677010b7dcee35` | 297,517 | [View](https://testnet-explorer.hsk.xyz/tx/0xc72e7bd373bebb42a98246b804a0f80f01ecec9d69eea70154677010b7dcee35) |
+| 3 | hkBOND transfer via ZK compliance (`RWAToken.transfer`) | `0xd8dd6123d0029709364ef8a4c60a7d5979525f31bb3c0d60fe58604631d045e3` | 41,387 | [View](https://testnet-explorer.hsk.xyz/tx/0xd8dd6123d0029709364ef8a4c60a7d5979525f31bb3c0d60fe58604631d045e3) |
+| 4 | Credential revoked via SMT (`RevocationRegistry.revoke`) | `0xa3dda47a900985c6d2cf56e63b6e9c6d169c2dfce91ceedca53838eab9bdd6ed` | 32,372 | [View](https://testnet-explorer.hsk.xyz/tx/0xa3dda47a900985c6d2cf56e63b6e9c6d169c2dfce91ceedca53838eab9bdd6ed) |
+
+Additional transactions from live dApp testing with multiple wallets:
+
+| Description | Tx Hash | Explorer |
+|---|---|---|
+| Second identity registered (dApp flow) | `0x17aabc1d7ee74c84cc509f26667641067cb552ca267565230915d32ba2e7f124` | [View](https://testnet-explorer.hsk.xyz/tx/0x17aabc1d7ee74c84cc509f26667641067cb552ca267565230915d32ba2e7f124) |
+| hkBOND airdrop to new user | `0xd86176529986b5bffda5e11c8ade1e619df9f26d8602a4dca84be097acc6ea34` | [View](https://testnet-explorer.hsk.xyz/tx/0xd86176529986b5bffda5e11c8ade1e619df9f26d8602a4dca84be097acc6ea34) |
+| Second submitProof (proof #2 measured at 280,429 gas) | `0x3e65e0cc6bf96bdef0f53c1951a66190bbcba3a39fa96db350dafa96245125e3` | [View](https://testnet-explorer.hsk.xyz/tx/0x3e65e0cc6bf96bdef0f53c1951a66190bbcba3a39fa96db350dafa96245125e3) |
+| Second compliant transfer | `0xb0d2406ca5bbdc82eed0b4e2752c4374741c69e9329858d7b98aa22ba2e92363` | [View](https://testnet-explorer.hsk.xyz/tx/0xb0d2406ca5bbdc82eed0b4e2752c4374741c69e9329858d7b98aa22ba2e92363) |
+
 ## Key Stats
 
 | Metric | Value |
 |--------|-------|
-| Constraint count | **14,992** |
-| Smart contracts | 5 |
-| Contract test suite | 7/7 passing |
-| Proof generation (Node.js) | ~3.9s |
-| Proof generation (browser) | ~3-5s |
-| Verification gas | ~200-300k gas |
-| Tree height | 20 levels (~1M identities) |
+| Circuit constraints | **14,992** (measured) |
+| Smart contracts | 8 deployed on HashKey Testnet (chain ID 133) |
+| Contract test suite | **27/27 passing** |
+| Proof generation (browser) | ~4s (8.9MB proving key) |
+| Verification gas | **297,517** (measured on-chain) |
+| Tree height | 20 (supports 1,048,576 identities) |
+| Revocation | Sparse Merkle Tree with per-user nullifiers |
+| HashKey KYC SBT | Compatible (`0x6447...Bd43`) |
+| Live dApp | https://zk-t-rex.vercel.app |
 | Proof system | Groth16 (BN128) |
 | Private inputs | 67 signals |
 | Public inputs | 6 signals + 1 output |
@@ -173,7 +226,7 @@ zktrex/
 │   │   ├── IdentityTreeManager.sol
 │   │   ├── RWAToken.sol           # ERC-3643 token
 │   │   └── interfaces/ICompliance.sol
-│   ├── test/ZKCompliance.t.sol    # 7 tests, all passing
+│   ├── test/                      # 27 tests, all passing
 │   └── script/Deploy.s.sol
 ├── frontend/                      # Next.js + RainbowKit
 │   └── src/
