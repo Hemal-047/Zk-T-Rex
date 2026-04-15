@@ -59,13 +59,15 @@ zkT-REX integrates with HashKey Chain's official KYC SBT. When `USE_HASHKEY_KYC=
 
 ### ZK Stack (the privacy layer)
 
-| Contract | Address | Explorer |
-|----------|---------|----------|
-| Groth16Verifier | `0xC65EeAbCD9B10dD3c11a5f5bb5DBd7C83D716386` | [View](https://testnet-explorer.hsk.xyz/address/0xC65EeAbCD9B10dD3c11a5f5bb5DBd7C83D716386) |
-| RevocationRegistry | `0x0261458Af146a1Fbd718722Af139974aDF2Afe8b` | [View](https://testnet-explorer.hsk.xyz/address/0x0261458Af146a1Fbd718722Af139974aDF2Afe8b) |
-| IdentityTreeManager | `0xA763ed1D503c7C36b123A3B8268461A9CA311b16` | [View](https://testnet-explorer.hsk.xyz/address/0xA763ed1D503c7C36b123A3B8268461A9CA311b16) |
-| ZKComplianceModule | `0x5Fe9E99EA98cEF1f66647E5d038bBE539dD3f744` | [View](https://testnet-explorer.hsk.xyz/address/0x5Fe9E99EA98cEF1f66647E5d038bBE539dD3f744) |
-| RWAToken (hkBOND) | `0x2F4647adf1824e87FaAc34531CB320206cd72151` | [View](https://testnet-explorer.hsk.xyz/address/0x2F4647adf1824e87FaAc34531CB320206cd72151) |
+All source-verified on HashKey Chain's Blockscout explorer.
+
+| Contract | Address | Verified | Explorer |
+|----------|---------|----------|----------|
+| Groth16Verifier | `0xC65EeAbCD9B10dD3c11a5f5bb5DBd7C83D716386` | ✅ | [View](https://testnet-explorer.hsk.xyz/address/0xC65EeAbCD9B10dD3c11a5f5bb5DBd7C83D716386) |
+| RevocationRegistry | `0x0261458Af146a1Fbd718722Af139974aDF2Afe8b` | ✅ | [View](https://testnet-explorer.hsk.xyz/address/0x0261458Af146a1Fbd718722Af139974aDF2Afe8b) |
+| IdentityTreeManager | `0xA763ed1D503c7C36b123A3B8268461A9CA311b16` | ✅ | [View](https://testnet-explorer.hsk.xyz/address/0xA763ed1D503c7C36b123A3B8268461A9CA311b16) |
+| ZKComplianceModule | `0x5Fe9E99EA98cEF1f66647E5d038bBE539dD3f744` | ✅ | [View](https://testnet-explorer.hsk.xyz/address/0x5Fe9E99EA98cEF1f66647E5d038bBE539dD3f744) |
+| RWAToken (hkBOND) | `0x2F4647adf1824e87FaAc34531CB320206cd72151` | ✅ | [View](https://testnet-explorer.hsk.xyz/address/0x2F4647adf1824e87FaAc34531CB320206cd72151) |
 
 ### Standard ERC-3643 Stack (transparent — deployed for side-by-side comparison)
 
