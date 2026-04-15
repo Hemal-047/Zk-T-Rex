@@ -1,145 +1,118 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { parseEther } from "viem";
-import { CONTRACTS, ZK_COMPLIANCE_ABI, RWA_TOKEN_ABI } from "../lib/contracts";
-import ProofGenerator from "./ProofGenerator";
+import {
+  useAccount,
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
+import { formatEther, isAddress, parseEther } from "viem";
+import {
+  CONTRACTS,
+  RWA_TOKEN_ABI,
+  ZK_COMPLIANCE_ABI,
+} from "../lib/contracts";
 
-type Step = "idle" | "proving" | "submitting" | "transferring" | "complete" | "error";
+type Phase = "idle" | "checking" | "transferring" | "done" | "error";
 
 export default function TransferPanel() {
   const { address } = useAccount();
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
-  const [step, setStep] = useState<Step>("idle");
+  const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState("");
-  const [txHash, setTxHash] = useState("");
-  const [proofData, setProofData] = useState<any>(null);
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
 
-  const { writeContractAsync: submitProof } = useWriteContract();
-  const { writeContractAsync: transfer } = useWriteContract();
+  const { data: balance, refetch: refetchBalance } = useReadContract({
+    address: CONTRACTS.rwaToken as `0x${string}`,
+    abi: RWA_TOKEN_ABI,
+    functionName: "balanceOf",
+    args: [address!],
+    query: { enabled: !!address },
+  });
 
-  const steps: { key: Step; label: string }[] = [
-    { key: "proving", label: "Generating ZK Proof" },
-    { key: "submitting", label: "Submitting Proof On-chain" },
-    { key: "transferring", label: "Executing Transfer" },
-    { key: "complete", label: "Complete" },
-  ];
+  const { data: recipientLastProof, refetch: refetchRecipientProof } =
+    useReadContract({
+      address: CONTRACTS.zkComplianceModule as `0x${string}`,
+      abi: ZK_COMPLIANCE_ABI,
+      functionName: "lastProofTimestamp",
+      args: [isAddress(recipient) ? (recipient as `0x${string}`) : address!],
+      query: { enabled: isAddress(recipient) },
+    });
+
+  const { writeContractAsync } = useWriteContract();
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: txHash ?? undefined,
+  });
+
+  const recipientCompliant = (() => {
+    if (!isAddress(recipient)) return null;
+    const ts = recipientLastProof ? Number(recipientLastProof) : 0;
+    if (ts === 0) return false;
+    const now = Math.floor(Date.now() / 1000);
+    return now - ts < 3600;
+  })();
 
   const handleTransfer = async () => {
-    if (!recipient || !amount || !address) return;
+    setError("");
+    if (!isAddress(recipient)) {
+      setError("Invalid recipient address");
+      setPhase("error");
+      return;
+    }
+    if (!amount || Number(amount) <= 0) {
+      setError("Enter an amount greater than zero");
+      setPhase("error");
+      return;
+    }
 
     try {
-      setError("");
-      setStep("proving");
+      setPhase("checking");
+      // Refresh in case the recipient just submitted a proof
+      const fresh = await refetchRecipientProof();
+      const ts = fresh.data ? Number(fresh.data) : 0;
+      const now = Math.floor(Date.now() / 1000);
+      if (ts === 0 || now - ts >= 3600) {
+        throw new Error(
+          "Recipient has no fresh compliance proof. The transfer would revert with 'Transfer not compliant'. Ask the recipient to visit this site, click 'Get Verified', then generate a proof."
+        );
+      }
 
-      // Step 1: Generate ZK proof (handled by ProofGenerator callback)
-      // For demo, we use mock proof data
-      const mockProof = {
-        a: ["0", "0"] as [string, string],
-        b: [["0", "0"], ["0", "0"]] as [[string, string], [string, string]],
-        c: ["0", "0"] as [string, string],
-        publicSignals: ["1", "0", "0", String(Math.floor(Date.now() / 1000)), "0", "0", "1"],
-      };
-      setProofData(mockProof);
-
-      // Step 2: Submit proof on-chain
-      setStep("submitting");
-      const proofTx = await submitProof({
-        address: CONTRACTS.zkComplianceModule as `0x${string}`,
-        abi: ZK_COMPLIANCE_ABI,
-        functionName: "submitProof",
-        args: [
-          mockProof.a.map(BigInt) as [bigint, bigint],
-          mockProof.b.map((r) => r.map(BigInt)) as [[bigint, bigint], [bigint, bigint]],
-          mockProof.c.map(BigInt) as [bigint, bigint],
-          mockProof.publicSignals.map(BigInt),
-        ],
-      });
-
-      // Step 3: Execute transfer
-      setStep("transferring");
-      const transferTx = await transfer({
+      setPhase("transferring");
+      const hash = await writeContractAsync({
         address: CONTRACTS.rwaToken as `0x${string}`,
         abi: RWA_TOKEN_ABI,
         functionName: "transfer",
         args: [recipient as `0x${string}`, parseEther(amount)],
       });
 
-      setTxHash(transferTx);
-      setStep("complete");
+      setTxHash(hash);
+      setPhase("done");
+      // Give the chain a moment, then refresh balance
+      setTimeout(() => refetchBalance(), 2000);
     } catch (err: any) {
-      setError(err.message || "Transaction failed");
-      setStep("error");
+      setError(err?.shortMessage || err?.message || "Transfer failed");
+      setPhase("error");
     }
-  };
-
-  const getStepStatus = (stepKey: Step) => {
-    const stepOrder: Step[] = ["proving", "submitting", "transferring", "complete"];
-    const currentIdx = stepOrder.indexOf(step);
-    const thisIdx = stepOrder.indexOf(stepKey);
-
-    if (step === "idle" || step === "error") return "pending";
-    if (thisIdx < currentIdx) return "done";
-    if (thisIdx === currentIdx) return "active";
-    return "pending";
   };
 
   return (
     <div className="card">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-400">
-        Transfer hkBOND
+        Step 3 · Transfer hkBOND
       </h2>
 
-      {/* Step indicator */}
-      {step !== "idle" && (
-        <div className="mb-6 space-y-2">
-          {steps.map((s) => {
-            const status = getStepStatus(s.key);
-            return (
-              <div key={s.key} className="flex items-center gap-3">
-                <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${
-                    status === "done"
-                      ? "bg-green-500 text-white"
-                      : status === "active"
-                      ? "bg-blue-500 text-white proving-animation"
-                      : "bg-zinc-800 text-zinc-500"
-                  }`}
-                >
-                  {status === "done" ? (
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : status === "active" ? (
-                    <div className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                  ) : (
-                    <span>{steps.indexOf(s) + 1}</span>
-                  )}
-                </div>
-                <span
-                  className={`text-sm ${
-                    status === "done"
-                      ? "text-green-400"
-                      : status === "active"
-                      ? "text-white"
-                      : "text-zinc-600"
-                  }`}
-                >
-                  {s.label}
-                  {status === "active" && s.key === "proving" && (
-                    <span className="ml-2 text-xs text-zinc-500">(~3-5 seconds)</span>
-                  )}
-                </span>
-              </div>
-            );
-          })}
+      <div className="mb-4 rounded-lg bg-zinc-800/50 p-3">
+        <div className="text-xs text-zinc-500">Your balance</div>
+        <div className="text-lg font-semibold text-white">
+          {balance !== undefined
+            ? `${Number(formatEther(balance as bigint)).toLocaleString(undefined, { maximumFractionDigits: 2 })} hkBOND`
+            : "—"}
         </div>
-      )}
+      </div>
 
-      {/* Form */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
           <label className="label">Recipient Address</label>
           <input
@@ -148,19 +121,28 @@ export default function TransferPanel() {
             placeholder="0x..."
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
-            disabled={step !== "idle" && step !== "error"}
           />
+          {isAddress(recipient) && recipientCompliant !== null && (
+            <p
+              className={`mt-1 text-xs ${
+                recipientCompliant ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              {recipientCompliant
+                ? "✓ Recipient has a fresh compliance proof"
+                : "✗ Recipient has NO fresh proof — transfer will revert"}
+            </p>
+          )}
         </div>
 
         <div>
-          <label className="label">Amount (hkBOND)</label>
+          <label className="label">Amount</label>
           <input
             type="number"
             className="input w-full"
             placeholder="100"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            disabled={step !== "idle" && step !== "error"}
           />
         </div>
 
@@ -170,16 +152,18 @@ export default function TransferPanel() {
           </div>
         )}
 
-        {step === "complete" && txHash && (
+        {phase === "done" && txHash && (
           <div className="rounded-lg bg-green-500/10 p-3">
-            <div className="text-sm text-green-400">Transfer successful!</div>
+            <div className="text-sm text-green-400">
+              {isConfirmed ? "Transfer confirmed!" : "Transfer sent..."}
+            </div>
             <a
               href={`https://testnet-explorer.hsk.xyz/tx/${txHash}`}
               target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-400 hover:underline"
+              rel="noreferrer"
+              className="font-mono text-xs text-blue-400 hover:text-blue-300"
             >
-              View on HashKey Explorer
+              {txHash.slice(0, 18)}... ↗
             </a>
           </div>
         )}
@@ -187,26 +171,25 @@ export default function TransferPanel() {
         <button
           className="btn-primary w-full"
           onClick={handleTransfer}
-          disabled={!recipient || !amount || (step !== "idle" && step !== "error" && step !== "complete")}
+          disabled={
+            phase === "checking" ||
+            phase === "transferring" ||
+            !recipient ||
+            !amount
+          }
         >
-          {step === "idle" || step === "error" || step === "complete"
-            ? "Generate Proof & Transfer"
-            : "Processing..."}
+          {phase === "checking"
+            ? "Checking compliance..."
+            : phase === "transferring"
+            ? "Transferring..."
+            : "Transfer"}
         </button>
 
-        {step === "complete" && (
-          <button
-            className="w-full rounded-lg border border-[#1e2028] px-4 py-2 text-sm text-zinc-400 transition hover:text-white"
-            onClick={() => {
-              setStep("idle");
-              setTxHash("");
-              setRecipient("");
-              setAmount("");
-            }}
-          >
-            New Transfer
-          </button>
-        )}
+        <p className="text-xs text-zinc-600">
+          Both sender and recipient must have submitted a valid ZK compliance
+          proof within the last hour. The token contract enforces this via the
+          ZKComplianceModule hook.
+        </p>
       </div>
     </div>
   );

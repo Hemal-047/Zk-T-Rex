@@ -1,14 +1,11 @@
-// DEMO_MODE controls whether the frontend uses bundled static data or
-// reads/writes against the live HashKey Testnet contracts.
-//
-//  true  -> static comparison data, no wallet required. Safe public-facing default
-//           for the Vercel deployment so visitors can browse the project end-to-end.
-//  false -> live on-chain reads + writes. Requires a connected wallet on HashKey
-//           Testnet (chain 133) and the deployer-funded compliance state below.
-//
-// Flip to false locally if you have a funded wallet and want to exercise the full
-// submitProof / canTransfer / revoke pipeline against the deployed contracts.
-export const DEMO_MODE = true;
+// DEMO_MODE toggles between static demo data and live HashKey Testnet.
+// We run the dApp in live mode by default — /api/issue-credential handles
+// server-side credential issuance, so any wallet can get verified.
+// Set to true only if you want to show the UI without any backend.
+export const DEMO_MODE = false;
+
+export const HASHKEY_TESTNET_CHAIN_ID = 133;
+export const EXPLORER_URL = "https://testnet-explorer.hsk.xyz";
 
 // Deployed to HashKey Testnet (Chain ID 133)
 // Explorer: https://testnet-explorer.hsk.xyz
@@ -89,9 +86,33 @@ export const RWA_TOKEN_ABI = [
     type: "function",
   },
   {
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    name: "mint",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [{ name: "account", type: "address" }],
     name: "balanceOf",
     outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "symbol",
+    outputs: [{ type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "decimals",
+    outputs: [{ type: "uint8" }],
     stateMutability: "view",
     type: "function",
   },
@@ -155,6 +176,23 @@ export const IDENTITY_TREE_ABI = [
     name: "identityCount",
     outputs: [{ type: "uint256" }],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "newRoot", type: "bytes32" }],
+    name: "updateRoot",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "newRoot", type: "bytes32" },
+      { name: "commitment", type: "bytes32" },
+    ],
+    name: "addIdentity",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
 ] as const;

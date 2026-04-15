@@ -38,3 +38,12 @@ contracts/broadcast/
 
 # Secrets
 scripts/issuer-key.json
+
+# Local test scratch
+.test-out/
+
+# TypeScript incremental build info
+frontend/tsconfig.tsbuildinfo
+
+# Claude Code local settings
+.claude/
