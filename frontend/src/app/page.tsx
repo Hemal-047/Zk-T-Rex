@@ -46,9 +46,13 @@ export default function Home() {
       <header className="border-b border-[#1e2028] px-6 py-4">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 font-bold text-white text-sm">
-              zk
-            </div>
+            <img
+              src="/logo.svg"
+              alt="zkT-REX"
+              width={36}
+              height={36}
+              className="h-9 w-9"
+            />
             <div>
               <h1 className="text-lg font-semibold text-white">zkT-REX</h1>
               <p className="text-xs text-zinc-500">

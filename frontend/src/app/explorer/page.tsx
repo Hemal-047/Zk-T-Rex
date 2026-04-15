@@ -169,9 +169,13 @@ export default function ExplorerPage() {
       <header className="border-b border-[#1e2028] px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <a href="/" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
-              zk
-            </div>
+            <img
+              src="/logo.svg"
+              alt="zkT-REX"
+              width={36}
+              height={36}
+              className="h-9 w-9"
+            />
             <div>
               <h1 className="text-lg font-semibold text-white">
                 zkT-REX · Compliance Explorer
