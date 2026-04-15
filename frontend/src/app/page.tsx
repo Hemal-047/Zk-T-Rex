@@ -204,6 +204,10 @@ export default function Home() {
             zkT-REX — HashKey Chain On-Chain Horizon Hackathon (ZKID Track)
           </span>
           <span>
+            <a href="/explorer" className="hover:text-zinc-400">
+              Explorer
+            </a>
+            {" · "}
             <a href="/admin" className="hover:text-zinc-400">
               Admin
             </a>
